@@ -5,4 +5,13 @@ set(CMAKE_CXX_STANDARD 26)
 
 add_executable(NewRayTracer main.cpp
         Vec.hpp
-        Sphere.hpp)
+        Sphere.hpp
+        Material.hpp
+        Light.hpp
+        Commons.hpp
+        Commons.cpp
+        Render.cpp
+        Render.hpp
+        #Model.cpp
+        #Model.hpp
+)

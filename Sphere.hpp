@@ -4,10 +4,13 @@
 
 #include <cmath>
 
+#include "Material.hpp"
+
 struct Sphere
 {
 	Vec3f center;
 	float radius;
+	Material material;
 
 	bool rayIntersects(const Vec3f& origin, const Vec3f& direction, float& t0) const
 	{

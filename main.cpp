@@ -1,66 +1,124 @@
-#include <cstdio>
 #include <vector>
-#include <fstream>
-#include <bits/ranges_algo.h>
+#include <chrono>
 
-#include "Sphere.hpp"
 #include "Vec.hpp"
+#include "Light.hpp"
+#include "Sphere.hpp"
+#include "Render.hpp"
 
-constexpr const char* const& OUTPUT_FILENAME{"out.ppm"};
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
-constexpr size_t RENDER_WIDTH{1024u};
-constexpr size_t RENDER_HEIGHT{768u};
-constexpr float ASPECT_RATIO{RENDER_WIDTH / static_cast<float>(RENDER_HEIGHT)};
-constexpr float FOV{M_PI / 2.};
-
-constexpr Vec3f VEC3F_ZERO{0, 0, 0};
-
-constexpr Vec3f BG_COLOR{VEC3F_ZERO};
-constexpr Vec3f RENDER_ORIGIN{VEC3F_ZERO};
-
-template<typename T> float intDiv(const T& a, const T& b)
-{ return static_cast<float>(a) / static_cast<float>(b); }
-
-float pixelRay(const size_t& i, const size_t& total)
-{ return 2.f * (static_cast<float>(i) + .5f)/static_cast<float>(total) - 1.f * std::tan(FOV/2.f); }
-
-Vec3f castRay(const Vec3f& origin, const Vec3f& direction, const Sphere& sphere)
-{
-	float minDist{std::numeric_limits<float>::max()};
-	if(!sphere.rayIntersects(origin, direction, minDist)) return BG_COLOR;
-	return {1, 1, 1};
-}
-
-void ppmWriteBuffer(const char* const& filename, const std::vector<Vec3f>& fb)
-{
-	if(std::ofstream out{filename}; out.is_open())
-	{
-		out << "P6\n" << RENDER_WIDTH << ' ' << RENDER_HEIGHT << "\n255\n"; // header
-		for(const Vec3f& i : fb) for(int j{0}; j < 3; ++j)
-			out << static_cast<unsigned char>(255 * std::max(0.f, std::min(1.f, i[j])));
-	}
-}
-
-void render(const Sphere& sphere)
-{
-	std::vector<Vec3f> fb(RENDER_WIDTH * RENDER_HEIGHT);
-
-	for(size_t i{0u}; i < RENDER_HEIGHT; ++i) for(size_t j{0u}; j < RENDER_WIDTH; ++j)
-	{
-		// fb[i * RENDER_WIDTH + j] = {intDiv(i, RENDER_HEIGHT), intDiv(j, RENDER_WIDTH), 0};
-
-		float x{pixelRay(j, RENDER_WIDTH) * ASPECT_RATIO};
-		float y{-pixelRay(i, RENDER_HEIGHT)};
-		Vec3f direction{Vec3f{x, y, -1}.normalize()};
-		fb[i * RENDER_WIDTH + j] = castRay(RENDER_ORIGIN, direction, sphere);
-	}
-	ppmWriteBuffer(OUTPUT_FILENAME, fb);
-}
 
 int main()
 {
-	Sphere sp1{{-12, 0, -16}, 10};
+	int background_width, background_height;
+	const unsigned char* const background{stbi_load("bg.jpg",
+		&background_width, &background_height, nullptr, 3)};
+	std::vector<Material> materials{
+		{ 1,
+			{
+				.6,
+				.3,
+				.1,
+				0
+			}, {
+				.4,
+				.4,
+				.3
+			}, 50
+		},{ 1.5,
+			{
+				0,
+				.5,
+				.1,
+				.8
+			}, {
+				.6,
+				.7,
+				.8
+			}, 125
+		}, { 1,
+			{
+				.9,
+				.1,
+				0,
+				0
+			}, {
+				.3,
+				.1,
+				.1
+			}, 10
+		}, { 1,
+			{
+				0,
+				10,
+				.8,
+				0
+			}, {
+				1,
+				1,
+				1
+			}, 1425
+		}
+	};
+	// Sphere sp1{{-12, 0, -16}, 10};
+	std::vector<Sphere> spheres{{
+			{
+				-3,
+				0,
+				-8,
+			}, 2, materials[0]
+		}, {
+			{
+				-1,
+				-1.5,
+				-6,
+			}, 2, materials[1]
+		}, {
+			{
+				1.5,
+				-.5,
+				-9
+			}, 3, materials[2]
+		}, {
+			{
+				7,
+				5,
+				-9
+			}, 4, materials[3]
+		}
+	};
+	std::vector<Light> lights{
+		{
+			{
+				-20,
+				20,
+				10
+			}, 1.5
+		}, {
+			{
+				30,
+				50,
+				-12.5
+			}, 1.8
+		}, {
+			{
+				30,
+				20,
+				15
+			}, 1.7
+		}
+	};
 
-	render(sp1);
+	std::chrono::duration sequentialTime{sequentialRender(spheres, lights, background, background_width, background_height)};
+	printf("Sequential time: %f\n", sequentialTime.count());
+
+	std::chrono::duration parallelTime{parallelRender(spheres, lights, background, background_width, background_height)};
+	printf("Parallel time: %f\n", parallelTime.count());
+
+	std::chrono::duration<float> speedup{sequentialTime / parallelTime};
+	printf("Speedup: %f\n", speedup.count());
+
 	return 0;
 }
