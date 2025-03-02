@@ -13,7 +13,7 @@
 int main()
 {
 	int background_width, background_height;
-	const unsigned char* const background{stbi_load("bg.jpg",
+	unsigned char* const background{stbi_load("bg.jpg",
 		&background_width, &background_height, nullptr, 3)};
 	std::vector<Material> materials{
 		{ 1,
@@ -119,6 +119,8 @@ int main()
 
 	std::chrono::duration<float> speedup{sequentialTime / parallelTime};
 	printf("Speedup: %f\n", speedup.count());
+
+	stbi_image_free(background);
 
 	return 0;
 }

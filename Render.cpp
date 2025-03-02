@@ -43,6 +43,7 @@ size_t sceneIntersect(const Vec3f& origin, const Vec3f& direction, const std::ve
 			temp = i;
 		}
 	}
+	if(temp >= spheres.size()) return SIZE_MAX;
 	hit = origin + direction * min_dist;
 	N = (hit - spheres[temp].center).normalize();
 	return min_dist < Commons::DRAW_DISTANCE ? temp : SIZE_MAX;
@@ -58,20 +59,22 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 		{ return hit - N * (dir * N < 0 ? 1e-3f : -1e-3f); }};
 
 	size_t idx{sceneIntersect(origin, direction, spheres, hit, N)};
-	if(depth > Commons::MAX_REFLECTIONS || idx >= spheres.size()) //return Commons::BG_COLOR;
+	if(depth > Commons::MAX_REFLECTIONS || idx >= spheres.size()) return Commons::BG_COLOR;
+	/*
 	{
 		int base_idx{static_cast<int>(bg_width * (direction.x / 2.f + .5) + bg_height * (direction.y / 2.f + .5))};
 		return Vec3f{bg[base_idx] / 255.f, bg[base_idx + 1] / 255.f, bg[base_idx + 2] / 255.f};
 	}
+	*/
 
 	Vec3f reflect_direction{reflect(direction, N).normalize()};
-	Vec3f refract_direction{refract(direction, N, spheres[idx].material.refractive_index).normalize()};
+	// Vec3f refract_direction{refract(direction, N, spheres[idx].material.refractive_index).normalize()};
 
 	Vec3f reflect_origin{origin_func(reflect_direction)};
-	Vec3f refract_origin{origin_func(refract_direction)};
+	// Vec3f refract_origin{origin_func(refract_direction)};
 
 	Vec3f reflect_color{castRay(reflect_origin, reflect_direction, spheres, lights, bg, bg_width, bg_height, depth + 1)};
-	Vec3f refract_color{castRay(refract_origin, refract_direction, spheres, lights, bg, bg_width, bg_height, depth + 1)};
+	// Vec3f refract_color{castRay(refract_origin, refract_direction, spheres, lights, bg, bg_width, bg_height, depth + 1)};
 
 	const Material& mat{spheres[idx].material};
 	float diffuse_light{0.f}, specular_light{0.f};
@@ -90,8 +93,8 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 	}
 	return mat.diffuse * diffuse_light * mat.albedo.x +
 		Vec3f{1, 1, 1} * specular_light * mat.albedo.y +
-			reflect_color * mat.albedo.z +
-				refract_color * mat.albedo.w;
+			reflect_color * mat.albedo.z;// +
+				// refract_color * mat.albedo.w;
 }
 
 void render(std::vector<Vec3f>& fb,
@@ -143,7 +146,7 @@ std::chrono::duration<float> parallelRender(const std::vector<Sphere>& spheres, 
 
 	size_t i{0u}, j{1u};
 	auto startTime{clk::now()};
-	for(; i < Commons::THREAD_COUNT; i = j, ++j)
+	for(; j < Commons::THREAD_COUNT; i = j, ++j)
 		threads[i] = std::make_unique<std::jthread>(&render,
 			std::ref(fb), spheres, lights, bg, width, height, partition_size * i, partition_size * j);
 
