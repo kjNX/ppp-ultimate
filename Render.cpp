@@ -59,8 +59,7 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 		{ return hit - N * (dir * N < 0 ? 1e-3f : -1e-3f); }};
 
 	size_t idx{sceneIntersect(origin, direction, spheres, hit, N)};
-	if(depth > Commons::MAX_REFLECTIONS || idx >= spheres.size()) return Commons::BG_COLOR;
-	/*
+	if(depth > Commons::MAX_REFLECTIONS || idx >= spheres.size())//return Commons::BG_COLOR;
 	{
 		int a{std::max(0, std::min(bg_width - 1, static_cast<int>((std::atan2(direction.z, direction.x)
 			/ (2 * M_PI) + .5) * bg_width)))};
@@ -68,7 +67,7 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 		size_t img_idx{(a + b * bg_width) * 3};
 		return Vec3f{bg[img_idx] / 255.f, bg[img_idx + 1] / 255.f, bg[img_idx + 2] / 255.f};
 	}
-	*/
+
 
 	Vec3f reflect_direction{reflect(direction, N).normalize()};
 	// Vec3f refract_direction{refract(direction, N, spheres[idx].material.refractive_index).normalize()};

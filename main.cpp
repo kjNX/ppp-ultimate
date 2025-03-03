@@ -63,6 +63,7 @@ int main()
 		}
 	};
 	// Sphere sp1{{-12, 0, -16}, 10};
+	/*
 	std::vector<Sphere> spheres{{
 			{
 				-3,
@@ -89,6 +90,24 @@ int main()
 			}, 4, materials[3]
 		}
 	};
+	*/
+	const size_t& sphere_rows{8u};
+	const size_t& sphere_cols{8u};
+	const size_t& sphere_count{sphere_rows * sphere_cols};
+	std::vector<Sphere> spheres(sphere_count);
+
+	for(size_t i{0u}; i < sphere_rows; ++i) for(size_t j{0u}; j < sphere_cols; ++j)
+	{
+		size_t curr{j + i * sphere_cols};
+		spheres[curr] = {
+			{
+				-10.f + 3.25f * static_cast<float>(j),
+				-4,
+				-6.f + -3.25f * static_cast<float>(i)
+			}, 2, materials[static_cast<int>(rand() % materials.size())]
+		};
+	}
+
 	std::vector<Light> lights{
 		{
 			{
