@@ -26,7 +26,7 @@ namespace Commons
 
 	inline constexpr Vec3f VEC3F_ZERO{0, 0, 0};
 
-	inline constexpr Vec3f BG_COLOR{.2, .7, .8};
+	inline constexpr Vec3f BG_COLOR{VEC3F_ZERO};
 	inline constexpr Vec3f RENDER_ORIGIN{VEC3F_ZERO};
 
 	inline constexpr const char* const& SEQUENTIAL_PATH{"sequential.ppm"};

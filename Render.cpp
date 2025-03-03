@@ -43,6 +43,7 @@ size_t sceneIntersect(const Vec3f& origin, const Vec3f& direction, const std::ve
 			temp = i;
 		}
 	}
+	if(temp >= spheres.size()) return SIZE_MAX;
 	hit = origin + direction * min_dist;
 	N = (hit - spheres[temp].center).normalize();
 	return min_dist < Commons::DRAW_DISTANCE ? temp : SIZE_MAX;
@@ -58,7 +59,8 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 		{ return hit - N * (dir * N < 0 ? 1e-3f : -1e-3f); }};
 
 	size_t idx{sceneIntersect(origin, direction, spheres, hit, N)};
-	if(depth > Commons::MAX_REFLECTIONS || idx >= spheres.size()) //return Commons::BG_COLOR;
+	if(depth > Commons::MAX_REFLECTIONS || idx >= spheres.size()) return Commons::BG_COLOR;
+	/*
 	{
 		int a{std::max(0, std::min(bg_width - 1, static_cast<int>((std::atan2(direction.z, direction.x)
 			/ (2 * M_PI) + .5) * bg_width)))};
@@ -66,15 +68,16 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 		size_t img_idx{(a + b * bg_width) * 3};
 		return Vec3f{bg[img_idx] / 255.f, bg[img_idx + 1] / 255.f, bg[img_idx + 2] / 255.f};
 	}
+	*/
 
 	Vec3f reflect_direction{reflect(direction, N).normalize()};
-	Vec3f refract_direction{refract(direction, N, spheres[idx].material.refractive_index).normalize()};
+	// Vec3f refract_direction{refract(direction, N, spheres[idx].material.refractive_index).normalize()};
 
 	Vec3f reflect_origin{origin_func(reflect_direction)};
-	Vec3f refract_origin{origin_func(refract_direction)};
+	// Vec3f refract_origin{origin_func(refract_direction)};
 
 	Vec3f reflect_color{castRay(reflect_origin, reflect_direction, spheres, lights, bg, bg_width, bg_height, depth + 1)};
-	Vec3f refract_color{castRay(refract_origin, refract_direction, spheres, lights, bg, bg_width, bg_height, depth + 1)};
+	// Vec3f refract_color{castRay(refract_origin, refract_direction, spheres, lights, bg, bg_width, bg_height, depth + 1)};
 
 	const Material& mat{spheres[idx].material};
 	float diffuse_light{0.f}, specular_light{0.f};
@@ -93,8 +96,8 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 	}
 	return mat.diffuse * diffuse_light * mat.albedo.x +
 		Vec3f{1, 1, 1} * specular_light * mat.albedo.y +
-			reflect_color * mat.albedo.z +
-				refract_color * mat.albedo.w;
+			reflect_color * mat.albedo.z;// +
+				// refract_color * mat.albedo.w;
 }
 
 void render(std::vector<Vec3f>& fb,
