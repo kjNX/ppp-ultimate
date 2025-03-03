@@ -38,7 +38,7 @@ template<typename T> struct Vec<3, T>
 	Vec& normalize(T l = 1)
 	{
 		float temp{norm()};
-		*this = *this * (l / temp ? temp : 1);
+		*this = *this * (l / (temp ? temp : 1));
 		return *this;
 	}
 

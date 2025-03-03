@@ -60,8 +60,11 @@ Vec3f castRay(const Vec3f& origin, const Vec3f& direction,
 	size_t idx{sceneIntersect(origin, direction, spheres, hit, N)};
 	if(depth > Commons::MAX_REFLECTIONS || idx >= spheres.size()) //return Commons::BG_COLOR;
 	{
-		int base_idx{static_cast<int>(bg_width * (direction.x / 2.f + .5) + bg_height * (direction.y / 2.f + .5))};
-		return Vec3f{bg[base_idx] / 255.f, bg[base_idx + 1] / 255.f, bg[base_idx + 2] / 255.f};
+		int a{std::max(0, std::min(bg_width - 1, static_cast<int>((std::atan2(direction.z, direction.x)
+			/ (2 * M_PI) + .5) * bg_width)))};
+		int b{std::max(0, std::min(bg_height - 1, static_cast<int>(std::acos(direction.y) / M_PI * bg_height)))};
+		size_t img_idx{(a + b * bg_width) * 3};
+		return Vec3f{bg[img_idx] / 255.f, bg[img_idx + 1] / 255.f, bg[img_idx + 2] / 255.f};
 	}
 
 	Vec3f reflect_direction{reflect(direction, N).normalize()};
@@ -143,7 +146,7 @@ std::chrono::duration<float> parallelRender(const std::vector<Sphere>& spheres, 
 
 	size_t i{0u}, j{1u};
 	auto startTime{clk::now()};
-	for(; i < Commons::THREAD_COUNT; i = j, ++j)
+	for(; j < Commons::THREAD_COUNT; i = j, ++j)
 		threads[i] = std::make_unique<std::jthread>(&render,
 			std::ref(fb), spheres, lights, bg, width, height, partition_size * i, partition_size * j);
 

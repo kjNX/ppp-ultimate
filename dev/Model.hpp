@@ -19,7 +19,6 @@ public:
 	Vec3f& point(const size_t& i);
 	const Vec3f& point(const size_t& i) const;
 	int vert(const size_t& fi, const size_t& li) const;
-	void get_bbox(Vec3f& min, Vec3f& max);
 };
 
 
